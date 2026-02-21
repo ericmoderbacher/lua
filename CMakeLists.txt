@@ -222,3 +222,57 @@ if(LUA_BUILD_TESTS)
     set_tests_properties(lua_user_tests PROPERTIES ENVIRONMENT "${LUA_TEST_ENV}")
   endif()
 endif()
+
+
+# --- Benchmarks / Profiling ---
+# Performance benchmarks that output a scorecard of ops/sec numbers.
+# Enabled separately from tests — these measure speed, not correctness.
+# Run with: ctest --test-dir build -R bench --verbose
+# The --verbose flag (or -V) is important: it shows the scorecard output
+# that would otherwise be hidden behind "Passed".
+
+option(LUA_BUILD_BENCHMARKS "Build Lua performance benchmarks" OFF)
+
+if(LUA_BUILD_BENCHMARKS)
+  if(NOT LUA_BUILD_TESTS)
+    # Benchmarks only need the production interpreter, not the test one.
+    # But if tests are also enabled, we reuse their CTest setup.
+    enable_testing()
+  endif()
+
+  set(BENCH_DIR ${CMAKE_CURRENT_SOURCE_DIR}/testes/benchmarks)
+
+  # Each benchmark script prints BENCH lines with ops/sec numbers.
+  # CTest's PASS_REGULAR_EXPRESSION makes it look for "Done." at the end
+  # to confirm the benchmark ran to completion (not just "did it exit 0?").
+
+  add_test(NAME bench_math
+    COMMAND lua_exe ${BENCH_DIR}/bench_math.lua
+    WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/testes
+  )
+  set_tests_properties(bench_math PROPERTIES
+    LABELS "benchmark"
+    PASS_REGULAR_EXPRESSION "Done\\."
+    TIMEOUT 120
+  )
+
+  add_test(NAME bench_tables
+    COMMAND lua_exe ${BENCH_DIR}/bench_tables.lua
+    WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/testes
+  )
+  set_tests_properties(bench_tables PROPERTIES
+    LABELS "benchmark"
+    PASS_REGULAR_EXPRESSION "Done\\."
+    TIMEOUT 120
+  )
+
+  add_test(NAME bench_calls
+    COMMAND lua_exe ${BENCH_DIR}/bench_calls.lua
+    WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/testes
+  )
+  set_tests_properties(bench_calls PROPERTIES
+    LABELS "benchmark"
+    PASS_REGULAR_EXPRESSION "Done\\."
+    TIMEOUT 120
+  )
+endif()
